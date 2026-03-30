@@ -32,7 +32,17 @@ class MainActivity : ComponentActivity() {
                                 settings.mediaPlaybackRequiresUserGesture = false
                                 settings.loadWithOverviewMode = true
                                 settings.useWideViewPort = true
-                                settings.allowFileAccess = true
+                                settings.allowFileAccess = false
+                                settings.allowContentAccess = false
+                                settings.mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+                                settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
+                                settings.setSupportZoom(true)
+                                settings.builtInZoomControls = true
+                                settings.displayZoomControls = false
+                                
+                                // Disable hardware acceleration for stability
+                                setLayerType(android.view.View.LAYER_TYPE_SOFTWARE, null)
+                                
                                 webViewClient = WebViewClient()
                                 loadUrl("https://www.elevatedrootsma.com")
                             }
@@ -46,7 +56,8 @@ class MainActivity : ComponentActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        val webView = (findViewById<WebView>(android.R.id.content)?.getChildAt(0) as? WebView)
+        val contentView = findViewById<android.view.View>(android.R.id.content)
+        val webView = (contentView?.getChildAt(0) as? WebView)
         if (webView != null && webView.canGoBack()) {
             webView.goBack()
         } else {
