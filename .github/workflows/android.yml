@@ -24,38 +24,30 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
       - name: Build debug APK
-        run: cd android && ./gradlew assembleDebug
+        run: cd android && ./gradlew assembleDebug --no-daemon
 
       - name: Upload to Elevated Roots Release
         run: |
-          # Get existing release ID
           RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/nishankk18/elevated-roots/releases" | \
-            python3 -c "import sys,json; releases=json.load(sys.stdin); print(releases[0]['id'] if releases else '')")
+            python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])")
           
-          if [ -z "$RELEASE_ID" ]; then
-            echo "No release found"
-            exit 1
-          fi
+          curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/nishankk18/elevated-roots/releases/assets/$(curl -s -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' 'https://api.github.com/repos/nishankk18/elevated-roots/releases/'$RELEASE_ID'/assets' | python3 -c \"import sys,json; print(json.load(sys.stdin)[0]['id'])\")"
           
-          # Delete old asset
-          ASSET_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/nishankk18/elevated-roots/releases/$RELEASE_ID/assets" | \
-            python3 -c "import sys,json; assets=json.load(sys.stdin); print(assets[0]['id'] if assets else '')")
-          
-          if [ -n "$ASSET_ID" ]; then
-            curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/nishankk18/elevated-roots/releases/assets/$ASSET_ID"
-          fi
-          
-          # Upload new APK
           curl -s -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/vnd.android.package-archive" \
             --data-binary "@android/app/build/outputs/apk/debug/app-debug.apk" \
-            "https://uploads.github.com/repos/nishankk18/elevated-roots/releases/$RELEASE_ID/assets?name=elevated-roots-v1.0.0.apk" | \
-            python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('browser_download_url', d.get('message','uploaded')))"
+            "https://uploads.github.com/repos/nishankk18/elevated-roots/releases/$RELEASE_ID/assets?name=elevated-roots-v1.0.0.apk"
