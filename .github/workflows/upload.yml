@@ -22,34 +22,41 @@ jobs:
           echo "APK_PATH=$APK_PATH" >> $GITHUB_OUTPUT
           echo "APK: $APK_PATH"
 
-      - name: Delete old asset
-        run: |
-          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/nishankk18/elevated-roots/releases" | \
-            python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])")
-          
-          ASSET_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/nishankk18/elevated-roots/releases/$RELEASE_ID/assets" | \
-            python3 -c "import sys,json; assets=json.load(sys.stdin); print(assets[0]['id'] if assets else '')")
-          
-          if [ -n "$ASSET_ID" ]; then
-            echo "Deleting asset $ASSET_ID"
-            curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/nishankk18/elevated-roots/releases/assets/$ASSET_ID"
-          fi
-
       - name: Upload new APK
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          APK_PATH=$(find . -name "*.apk" -type f | head -1)
+          APK_SIZE=$(stat -c%s "$APK_PATH")
+          echo "APK file: $APK_PATH (size: $APK_SIZE bytes)"
+          
+          # Get release ID
+          echo "Getting release ID..."
+          RELEASE_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
             "https://api.github.com/repos/nishankk18/elevated-roots/releases" | \
             python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])")
+          echo "Release ID: $RELEASE_ID"
           
-          APK_PATH=$(find . -name "*.apk" -type f | head -1)
-          echo "Uploading $APK_PATH to release $RELEASE_ID"
+          # Delete old asset
+          echo "Checking for old assets..."
+          ASSET_RESPONSE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/repos/nishankk18/elevated-roots/releases/$RELEASE_ID/assets")
+          echo "Asset response: $ASSET_RESPONSE"
           
-          curl -s -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          ASSET_ID=$(echo "$ASSET_RESPONSE" | python3 -c "import sys,json; assets=json.load(sys.stdin); print(assets[0]['id'] if assets else '')")
+          if [ -n "$ASSET_ID" ]; then
+            echo "Deleting old asset $ASSET_ID..."
+            curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+              "https://api.github.com/repos/nishankk18/elevated-roots/releases/assets/$ASSET_ID"
+            echo "Delete response: $?"
+          fi
+          
+          # Upload new APK
+          echo "Uploading APK..."
+          UPLOAD_RESPONSE=$(curl -s -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/vnd.android.package-archive" \
+            -H "Content-Length: $APK_SIZE" \
             --data-binary "@$APK_PATH" \
-            "https://uploads.github.com/repos/nishankk18/elevated-roots/releases/$RELEASE_ID/assets?name=elevated-roots-v1.0.0.apk" | \
-            python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('browser_download_url', d.get('message','uploaded')))"
+            "https://uploads.github.com/repos/nishankk18/elevated-roots/releases/$RELEASE_ID/assets?name=elevated-roots-v1.0.0.apk" 2>&1)
+          echo "Upload response: $UPLOAD_RESPONSE"
