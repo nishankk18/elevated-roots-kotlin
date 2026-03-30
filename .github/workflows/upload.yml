@@ -1,0 +1,30 @@
+name: Upload APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download APK from artifact
+        run: |
+          # Download artifact from previous build
+          curl -sL "https://api.github.com/repos/nishankk18/elevated-roots-kotlin/actions/artifacts/6171896661/zip" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -o artifact.zip
+          unzip -o artifact.zip
+          APK=$(find . -name "*.apk")
+          echo "APK found: $APK"
+          
+      - name: Upload to elevated-roots release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "*.apk"
+          repo: nishankk18/elevated-roots
+          tag_name: v1.0.0
+          name: Elevated Roots MA v1.0.0
+          draft: false
+          overwrite: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
