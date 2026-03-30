@@ -1,0 +1,34 @@
+name: Final Upload
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        run: |
+          curl -sL "https://api.github.com/repos/nishankk18/elevated-roots-kotlin/actions/artifacts/6171896661/zip" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -o artifact.zip
+          unzip -o artifact.zip
+          ls -la
+
+      - name: Get APK path
+        id: apk
+        run: |
+          APK=$(find . -name "*.apk" | head -1)
+          echo "APK=$APK" >> $GITHUB_OUTPUT
+          echo "Found: $APK"
+
+      - name: Create new release with APK
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.apk.outputs.APK }}
+          tag_name: v1.0.0-final
+          name: Elevated Roots MA v1.0.0
+          draft: false
+          body: "Pure Kotlin WebView app - opens www.elevatedrootsma.com"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
