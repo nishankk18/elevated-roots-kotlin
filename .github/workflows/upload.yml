@@ -7,20 +7,26 @@ jobs:
   upload:
     runs-on: ubuntu-latest
     steps:
-      - name: Download APK from artifact
+      - name: Download and extract APK
         run: |
-          # Download artifact from previous build
           curl -sL "https://api.github.com/repos/nishankk18/elevated-roots-kotlin/actions/artifacts/6171896661/zip" \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -o artifact.zip
           unzip -o artifact.zip
-          APK=$(find . -name "*.apk")
-          echo "APK found: $APK"
-          
+          ls -la
+
+      - name: Find APK
+        id: find_apk
+        run: |
+          APK_PATH=$(find . -name "*.apk" -type f | head -1)
+          echo "APK_PATH=$APK_PATH" >> $GITHUB_OUTPUT
+          echo "APK: $APK_PATH"
+          ls -lh "$APK_PATH"
+
       - name: Upload to elevated-roots release
         uses: softprops/action-gh-release@v2
         with:
-          files: "*.apk"
+          files: ${{ steps.find_apk.outputs.APK_PATH }}
           repo: nishankk18/elevated-roots
           tag_name: v1.0.0
           name: Elevated Roots MA v1.0.0
