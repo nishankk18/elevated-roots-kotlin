@@ -3,8 +3,6 @@ name: Android CI
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 permissions:
   contents: write
@@ -24,30 +22,20 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle.kts') }}
-          restore-keys: ${{ runner.os }}-gradle-
-
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
       - name: Build debug APK
         run: cd android && ./gradlew assembleDebug --no-daemon
 
-      - name: Upload to Elevated Roots Release
-        run: |
-          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/nishankk18/elevated-roots/releases" | \
-            python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])")
-          
-          curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/nishankk18/elevated-roots/releases/assets/$(curl -s -H 'Authorization: token ${{ secrets.GITHUB_TOKEN }}' 'https://api.github.com/repos/nishankk18/elevated-roots/releases/'$RELEASE_ID'/assets' | python3 -c \"import sys,json; print(json.load(sys.stdin)[0]['id'])\")"
-          
-          curl -s -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Content-Type: application/vnd.android.package-archive" \
-            --data-binary "@android/app/build/outputs/apk/debug/app-debug.apk" \
-            "https://uploads.github.com/repos/nishankk18/elevated-roots/releases/$RELEASE_ID/assets?name=elevated-roots-v1.0.0.apk"
+      - name: Upload to elevated-roots release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          repo: nishankk18/elevated-roots
+          tag_name: v1.0.0
+          name: Elevated Roots MA v1.0.0
+          draft: false
+          overwrite: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
