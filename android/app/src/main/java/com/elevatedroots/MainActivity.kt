@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -14,9 +15,23 @@ import androidx.compose.ui.viewinterop.AndroidView
 
 class MainActivity : ComponentActivity() {
 
+    private var webView: WebView? = null
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val wv = webView
+                if (wv != null && wv.canGoBack()) {
+                    wv.goBack()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
 
         setContent {
             MaterialTheme {
@@ -39,12 +54,13 @@ class MainActivity : ComponentActivity() {
                                 settings.setSupportZoom(true)
                                 settings.builtInZoomControls = true
                                 settings.displayZoomControls = false
-                                
+
                                 // Disable hardware acceleration for stability
                                 setLayerType(android.view.View.LAYER_TYPE_SOFTWARE, null)
-                                
+
                                 webViewClient = WebViewClient()
                                 loadUrl("https://www.elevatedrootsma.com")
+                                webView = this
                             }
                         },
                         modifier = Modifier.fillMaxSize()
@@ -54,14 +70,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        val contentView = findViewById<android.view.View>(android.R.id.content)
-        val webView = (contentView?.getChildAt(0) as? WebView)
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            super.onBackPressed()
-        }
+    override fun onDestroy() {
+        webView?.destroy()
+        super.onDestroy()
     }
 }
