@@ -1,0 +1,28 @@
+name: Upload to Catbox
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        run: |
+          curl -sL "https://api.github.com/repos/nishankk18/elevated-roots-kotlin/actions/artifacts/6171896661/zip" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -o artifact.zip
+          unzip -o artifact.zip
+          ls -la
+
+      - name: Find APK
+        id: apk
+        run: |
+          APK=$(find . -name "*.apk" | head -1)
+          echo "APK=$APK" >> $GITHUB_OUTPUT
+          echo "Found: $APK"
+          ls -lh "$APK"
+
+      - name: Upload to Catbox
+        run: |
+          curl -F "reqtype=fileupload" -F "fileToUpload=@${{ steps.apk.outputs.APK }}" https://catbox.moe/user/api.php
