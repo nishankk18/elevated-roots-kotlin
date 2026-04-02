@@ -1,0 +1,29 @@
+name: Upload to Transfer
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        run: |
+          curl -sL "https://api.github.com/repos/nishankk18/elevated-roots-kotlin/actions/artifacts/6171896661/zip" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -o artifact.zip
+          unzip -o artifact.zip
+
+      - name: Find APK
+        id: apk
+        run: |
+          APK=$(find . -name "*.apk" | head -1)
+          echo "APK=$APK" >> $GITHUB_OUTPUT
+          echo "Found: $APK"
+          ls -lh "$APK"
+
+      - name: Upload to Transfer.sh
+        run: |
+          APK_PATH=${{ steps.apk.outputs.APK }}
+          RESP=$(curl --max-time 120 -s -F "file=@$APK_PATH" https://transfer.sh/elevated-roots-v1.0.0.apk)
+          echo "URL: $RESP"
