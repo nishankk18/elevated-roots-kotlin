@@ -151,9 +151,9 @@ class MainActivity : AppCompatActivity() {
         currentWebView?.apply {
             stopLoading()
             webChromeClient = null
-            webViewClient = null
             loadUrl("about:blank")
             clearHistory()
+            clearCache(true)
             removeAllViews()
             (parent as? ViewGroup)?.removeView(this)
             destroy()
