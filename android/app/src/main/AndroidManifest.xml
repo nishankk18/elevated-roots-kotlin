@@ -14,7 +14,7 @@
         android:theme="@style/Theme.ElevatedRoots"
         android:usesCleartextTraffic="false">
         <activity
-            android:name=".MainActivity"
+            android:name="com.knv.elevatedroots.MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density"
             android:exported="true"
             android:hardwareAccelerated="true"

@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "com.elevatedroots"
+    namespace = "com.knv.elevatedroots"
     compileSdk = 34
 
     defaultConfig {
         applicationId = "com.knv.elevatedroots"
-        minSdk = 26
+        minSdk = 21
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
     }
 
     buildTypes {
