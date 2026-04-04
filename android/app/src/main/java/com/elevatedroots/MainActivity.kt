@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity() {
     private fun cleanupWebView(currentWebView: WebView?) {
         currentWebView?.apply {
             stopLoading()
-            webViewClient = null
+            webViewClient = WebViewClient()
             webChromeClient = null
             clearHistory()
             clearCache(false)
