@@ -47,8 +47,8 @@ jobs:
         with:
           files: ${{ steps.apk.outputs.APK }}
           repository: nishankk18/elevated-roots-kotlin
-          tag_name: v1.0.2-apk
-          name: Elevated Roots MA APK v1.0.2
+          tag_name: v1.0.3-apk
+          name: Elevated Roots MA APK v1.0.3
           draft: false
           overwrite_files: true
           body: "Pure Kotlin WebView app - opens https://www.elevatedrootsma.com/"
